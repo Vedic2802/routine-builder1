@@ -1,0 +1,502 @@
+import { useState } from 'react';
+import { motion } from 'motion/react';
+import { 
+  Home, Calendar, Target, TrendingUp, Settings, LogOut,
+  Flame, Sparkles, Sun, Moon, CheckCircle2, Circle
+} from 'lucide-react';
+import { Button } from './ui/button';
+import { AIResults, UserData } from '../App';
+
+type DashboardProps = {
+  results: AIResults;
+  userData: UserData;
+  onBack: () => void;
+};
+
+type NavItem = 'dashboard' | 'routine' | 'calendar' | 'habits' | 'settings';
+
+export default function Dashboard({ results, userData, onBack }: DashboardProps) {
+  const [activeNav, setActiveNav] = useState<NavItem>('dashboard');
+  const [habitChecks, setHabitChecks] = useState<boolean[]>(new Array(results.habits.length).fill(false));
+
+  const toggleHabit = (idx: number) => {
+    setHabitChecks(prev => {
+      const newChecks = [...prev];
+      newChecks[idx] = !newChecks[idx];
+      return newChecks;
+    });
+  };
+
+  const completedHabits = habitChecks.filter(Boolean).length;
+  const streak = 7; // Mock streak
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#F9FAFB] via-[#E7D9FF]/10 to-[#AEE3FF]/10">
+      <div className="flex h-screen">
+        {/* Sidebar */}
+        <motion.aside
+          initial={{ x: -100, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          className="w-72 bg-white/60 backdrop-blur-xl border-r border-white/80 p-6 flex flex-col"
+        >
+          {/* Logo */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#C9FCE8] to-[#E7D9FF] rounded-xl flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-[#3E2C88]" />
+              </div>
+              <span className="text-[#3E2C88]">Routine-Builder</span>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 space-y-2">
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveNav(item.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
+                  activeNav === item.id
+                    ? 'bg-gradient-to-r from-[#C9FCE8] to-[#E7D9FF] text-[#3E2C88]'
+                    : 'text-[#3E2C88]/60 hover:bg-white/60'
+                }`}
+              >
+                <item.icon className="w-5 h-5" />
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </nav>
+
+          {/* Logout */}
+          <Button
+            onClick={onBack}
+            variant="ghost"
+            className="w-full justify-start text-[#3E2C88]/60 hover:bg-white/60 rounded-2xl"
+          >
+            <LogOut className="w-5 h-5 mr-3" />
+            Logout
+          </Button>
+        </motion.aside>
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="p-8 max-w-7xl mx-auto">
+            {activeNav === 'dashboard' && (
+              <DashboardView 
+                userData={userData} 
+                results={results} 
+                completedHabits={completedHabits}
+                streak={streak}
+              />
+            )}
+            {activeNav === 'routine' && (
+              <RoutineView results={results} />
+            )}
+            {activeNav === 'habits' && (
+              <HabitsView 
+                results={results} 
+                habitChecks={habitChecks}
+                toggleHabit={toggleHabit}
+                streak={streak}
+              />
+            )}
+            {activeNav === 'calendar' && (
+              <CalendarView results={results} />
+            )}
+            {activeNav === 'settings' && (
+              <SettingsView userData={userData} />
+            )}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+function DashboardView({ userData, results, completedHabits, streak }: { 
+  userData: UserData; 
+  results: AIResults;
+  completedHabits: number;
+  streak: number;
+}) {
+  const currentHour = new Date().getHours();
+  const greeting = currentHour < 12 ? 'Good Morning' : currentHour < 18 ? 'Good Afternoon' : 'Good Evening';
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <h1 className="text-[#3E2C88] mb-2">
+          {greeting}, {userData.name} ✨
+        </h1>
+        <p className="text-[#3E2C88]/70">
+          Ready to crush your routine today?
+        </p>
+      </motion.div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-gradient-to-br from-[#FFD6E8]/40 to-[#E7D9FF]/40 backdrop-blur-xl rounded-3xl p-6 border border-white/80"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-[#3E2C88]/70">Streak</span>
+            <Flame className="w-6 h-6 text-[#FF6B6B]" />
+          </div>
+          <div className="text-[#3E2C88]">{streak} Days 🔥</div>
+          <p className="text-[#3E2C88]/60 mt-1">Keep it going!</p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-gradient-to-br from-[#C9FCE8]/40 to-[#AEE3FF]/40 backdrop-blur-xl rounded-3xl p-6 border border-white/80"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-[#3E2C88]/70">Today's Habits</span>
+            <CheckCircle2 className="w-6 h-6 text-[#C9FCE8]" />
+          </div>
+          <div className="text-[#3E2C88]">{completedHabits} / {results.habits.length}</div>
+          <p className="text-[#3E2C88]/60 mt-1">Tasks completed</p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-gradient-to-br from-[#E7D9FF]/40 to-[#FFD6E8]/40 backdrop-blur-xl rounded-3xl p-6 border border-white/80"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-[#3E2C88]/70">Balance Score</span>
+            <Target className="w-6 h-6 text-[#E7D9FF]" />
+          </div>
+          <div className="text-[#3E2C88]">{100 - results.stressScore}%</div>
+          <p className="text-[#3E2C88]/60 mt-1">Well balanced</p>
+        </motion.div>
+      </div>
+
+      {/* Today's Plan & AI Tips */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white/60 backdrop-blur-xl rounded-3xl p-6 border border-white/80"
+        >
+          <h3 className="text-[#3E2C88] mb-4 flex items-center gap-2">
+            <Sun className="w-5 h-5" />
+            Today's Plan
+          </h3>
+          <div className="space-y-3">
+            {results.timetable.slice(0, 6).map((item, idx) => (
+              <div key={idx} className="flex items-center gap-3 p-3 bg-gradient-to-r from-[#C9FCE8]/20 to-[#E7D9FF]/20 rounded-xl">
+                <span className="text-[#3E2C88]">{item.time}</span>
+                <span className="text-[#3E2C88]/70">·</span>
+                <span className="text-[#3E2C88]">{item.activity}</span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-gradient-to-br from-[#E7D9FF]/40 to-[#C9FCE8]/40 backdrop-blur-xl rounded-3xl p-6 border border-white/80"
+        >
+          <h3 className="text-[#3E2C88] mb-4 flex items-center gap-2">
+            <Sparkles className="w-5 h-5" />
+            AI Tips of the Day
+          </h3>
+          <div className="space-y-4">
+            {results.feedback.map((tip, idx) => (
+              <div key={idx} className="flex gap-3 p-4 bg-white/60 rounded-xl">
+                <span className="text-2xl">{tip.emoji}</span>
+                <p className="text-[#3E2C88]">{tip.message}</p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Mood Tracker */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="bg-white/60 backdrop-blur-xl rounded-3xl p-6 border border-white/80"
+      >
+        <h3 className="text-[#3E2C88] mb-4">How are you feeling today?</h3>
+        <div className="flex gap-4">
+          {moods.map((mood, idx) => (
+            <button
+              key={idx}
+              className="flex-1 p-4 bg-gradient-to-br from-[#C9FCE8]/20 to-[#E7D9FF]/20 rounded-2xl hover:scale-105 transition-transform"
+            >
+              <span className="text-3xl">{mood.emoji}</span>
+              <p className="text-[#3E2C88] mt-2">{mood.label}</p>
+            </button>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+function RoutineView({ results }: { results: AIResults }) {
+  return (
+    <div className="space-y-6">
+      <h2 className="text-[#3E2C88]">Your Daily Routine</h2>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white/60 backdrop-blur-xl rounded-3xl p-6 border border-white/80">
+          <h3 className="text-[#3E2C88] mb-4 flex items-center gap-2">
+            <Sun className="w-5 h-5 text-[#FFD6E8]" />
+            Morning Routine
+          </h3>
+          <ul className="space-y-3">
+            {results.morningRoutine.map((item, idx) => (
+              <li key={idx} className="flex items-start gap-3 p-3 bg-gradient-to-r from-[#FFD6E8]/20 to-[#AEE3FF]/20 rounded-xl">
+                <CheckCircle2 className="w-5 h-5 text-[#C9FCE8] mt-0.5" />
+                <span className="text-[#3E2C88]">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="bg-white/60 backdrop-blur-xl rounded-3xl p-6 border border-white/80">
+          <h3 className="text-[#3E2C88] mb-4 flex items-center gap-2">
+            <Moon className="w-5 h-5 text-[#E7D9FF]" />
+            Night Routine
+          </h3>
+          <ul className="space-y-3">
+            {results.nightRoutine.map((item, idx) => (
+              <li key={idx} className="flex items-start gap-3 p-3 bg-gradient-to-r from-[#3E2C88]/10 to-[#E7D9FF]/20 rounded-xl">
+                <CheckCircle2 className="w-5 h-5 text-[#E7D9FF] mt-0.5" />
+                <span className="text-[#3E2C88]">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <div className="bg-white/60 backdrop-blur-xl rounded-3xl p-6 border border-white/80">
+        <h3 className="text-[#3E2C88] mb-6">Complete Timetable</h3>
+        <div className="space-y-2">
+          {results.timetable.map((item, idx) => (
+            <div key={idx} className="flex items-center gap-4 p-4 bg-gradient-to-r from-[#C9FCE8]/10 to-[#E7D9FF]/10 rounded-xl hover:scale-[1.02] transition-transform">
+              <div className="bg-white/80 px-4 py-2 rounded-lg min-w-[90px] text-center">
+                <span className="text-[#3E2C88]">{item.time}</span>
+              </div>
+              <span className="text-[#3E2C88]">{item.activity}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HabitsView({ 
+  results, 
+  habitChecks, 
+  toggleHabit,
+  streak 
+}: { 
+  results: AIResults; 
+  habitChecks: boolean[];
+  toggleHabit: (idx: number) => void;
+  streak: number;
+}) {
+  const completedCount = habitChecks.filter(Boolean).length;
+  const progress = (completedCount / results.habits.length) * 100;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-[#3E2C88]">Habit Tracker</h2>
+        <div className="flex items-center gap-2 bg-gradient-to-r from-[#FFD6E8] to-[#FF6B6B] px-6 py-3 rounded-full">
+          <Flame className="w-5 h-5 text-white" />
+          <span className="text-white">{streak} Day Streak!</span>
+        </div>
+      </div>
+
+      <div className="bg-white/60 backdrop-blur-xl rounded-3xl p-6 border border-white/80">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-[#3E2C88]">Today's Progress</span>
+          <span className="text-[#3E2C88]">{completedCount} / {results.habits.length}</span>
+        </div>
+        <div className="h-4 bg-white/60 rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            className="h-full bg-gradient-to-r from-[#C9FCE8] to-[#E7D9FF] rounded-full"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {results.habits.map((habit, idx) => (
+          <motion.button
+            key={idx}
+            onClick={() => toggleHabit(idx)}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className={`p-6 rounded-2xl border-2 transition-all text-left ${
+              habitChecks[idx]
+                ? 'bg-gradient-to-br from-[#C9FCE8] to-[#E7D9FF] border-[#C9FCE8]'
+                : 'bg-white/60 backdrop-blur-xl border-white/80'
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              {habitChecks[idx] ? (
+                <CheckCircle2 className="w-6 h-6 text-[#3E2C88] flex-shrink-0" />
+              ) : (
+                <Circle className="w-6 h-6 text-[#3E2C88]/40 flex-shrink-0" />
+              )}
+              <span className={`text-[#3E2C88] ${habitChecks[idx] ? 'line-through' : ''}`}>
+                {habit}
+              </span>
+            </div>
+          </motion.button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {achievements.map((achievement, idx) => (
+          <div
+            key={idx}
+            className="bg-gradient-to-br from-[#FFD6E8]/40 to-[#E7D9FF]/40 backdrop-blur-xl rounded-2xl p-6 border border-white/80 text-center"
+          >
+            <div className="text-4xl mb-3">{achievement.emoji}</div>
+            <h4 className="text-[#3E2C88] mb-2">{achievement.title}</h4>
+            <p className="text-[#3E2C88]/70">{achievement.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CalendarView({ results }: { results: AIResults }) {
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const currentDay = new Date().getDay();
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-[#3E2C88]">Calendar</h2>
+        <div className="bg-gradient-to-r from-[#C9FCE8] to-[#E7D9FF] px-4 py-2 rounded-full">
+          <span className="text-[#3E2C88]">✓ Synced with Google Calendar</span>
+        </div>
+      </div>
+
+      <div className="bg-white/60 backdrop-blur-xl rounded-3xl p-6 border border-white/80">
+        <h3 className="text-[#3E2C88] mb-6">This Week</h3>
+        <div className="grid grid-cols-7 gap-4">
+          {days.map((day, idx) => (
+            <div
+              key={idx}
+              className={`p-4 rounded-2xl text-center ${
+                idx === currentDay - 1
+                  ? 'bg-gradient-to-br from-[#C9FCE8] to-[#E7D9FF]'
+                  : 'bg-white/60'
+              }`}
+            >
+              <div className="text-[#3E2C88] mb-2">{day}</div>
+              <div className="text-[#3E2C88]">{idx + 11}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-white/60 backdrop-blur-xl rounded-3xl p-6 border border-white/80">
+        <h3 className="text-[#3E2C88] mb-4">Upcoming Events</h3>
+        <div className="space-y-3">
+          {results.timetable.slice(0, 5).map((item, idx) => (
+            <div
+              key={idx}
+              className="flex items-center gap-4 p-4 bg-gradient-to-r from-[#C9FCE8]/20 to-[#E7D9FF]/20 rounded-xl"
+            >
+              <div className="w-2 h-2 bg-[#C9FCE8] rounded-full" />
+              <span className="text-[#3E2C88]">{item.time}</span>
+              <span className="text-[#3E2C88]">{item.activity}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SettingsView({ userData }: { userData: UserData }) {
+  return (
+    <div className="space-y-6">
+      <h2 className="text-[#3E2C88]">Settings</h2>
+      
+      <div className="bg-white/60 backdrop-blur-xl rounded-3xl p-6 border border-white/80">
+        <h3 className="text-[#3E2C88] mb-6">Profile</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="text-[#3E2C88]/70 block mb-2">Name</label>
+            <div className="text-[#3E2C88]">{userData.name}</div>
+          </div>
+          <div>
+            <label className="text-[#3E2C88]/70 block mb-2">Age</label>
+            <div className="text-[#3E2C88]">{userData.age}</div>
+          </div>
+          <div>
+            <label className="text-[#3E2C88]/70 block mb-2">Class</label>
+            <div className="text-[#3E2C88]">{userData.classSemester}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white/60 backdrop-blur-xl rounded-3xl p-6 border border-white/80">
+        <h3 className="text-[#3E2C88] mb-6">Notifications</h3>
+        <div className="space-y-3">
+          <label className="flex items-center justify-between p-4 bg-gradient-to-r from-[#C9FCE8]/20 to-[#E7D9FF]/20 rounded-xl">
+            <span className="text-[#3E2C88]">🫶 Gen-Z friendly reminders</span>
+            <input type="checkbox" defaultChecked className="w-5 h-5" />
+          </label>
+          <label className="flex items-center justify-between p-4 bg-gradient-to-r from-[#C9FCE8]/20 to-[#E7D9FF]/20 rounded-xl">
+            <span className="text-[#3E2C88]">💧 Hydration reminders</span>
+            <input type="checkbox" defaultChecked className="w-5 h-5" />
+          </label>
+          <label className="flex items-center justify-between p-4 bg-gradient-to-r from-[#C9FCE8]/20 to-[#E7D9FF]/20 rounded-xl">
+            <span className="text-[#3E2C88]">🔔 Study session alerts</span>
+            <input type="checkbox" defaultChecked className="w-5 h-5" />
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const navItems = [
+  { id: 'dashboard' as NavItem, icon: Home, label: 'Dashboard' },
+  { id: 'routine' as NavItem, icon: Sun, label: 'Routine' },
+  { id: 'calendar' as NavItem, icon: Calendar, label: 'Calendar' },
+  { id: 'habits' as NavItem, icon: Target, label: 'Habits' },
+  { id: 'settings' as NavItem, icon: Settings, label: 'Settings' }
+];
+
+const moods = [
+  { emoji: '😊', label: 'Great' },
+  { emoji: '😌', label: 'Good' },
+  { emoji: '😐', label: 'Okay' },
+  { emoji: '😓', label: 'Stressed' }
+];
+
+const achievements = [
+  { emoji: '👑', title: 'Consistency Queen', description: '7 day streak!' },
+  { emoji: '🔥', title: 'Early Bird', description: 'Woke up early 5 days' },
+  { emoji: '✨', title: 'Habit Master', description: 'All habits completed' }
+];
